@@ -153,9 +153,32 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    /* Print styles */
+    @media print {
+        body * { visibility: hidden; }
+        .print-target, .print-target * { visibility: visible; }
+        .print-target {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+    }
 </style>
 </head>
 <body>
+
+<!-- Hidden print-only slip -->
+<div id="printSlip" style="display:none;">
+    <div style="text-align:center; font-family:'Segoe UI',Roboto,Arial,sans-serif; border: 2px solid #2563eb; border-radius: 12px; padding: 32px; max-width: 420px; margin: auto;">
+        <h2 style="color:#2563eb; margin-top:0;">MedCare — Appointment Confirmation</h2>
+        <div id="printTokenNumber" style="font-size:56px; font-weight:800; color:#2563eb; margin: 8px 0;"></div>
+        <div id="printTokenDetails" style="text-align:left; background:#f8fafc; padding:16px; border-radius:8px; font-size:1rem; line-height:1.8;"></div>
+        <p style="font-size:0.8rem; color:#64748b; margin-top:16px;">Please present this slip at the reception desk.</p>
+    </div>
+</div>
 
 <!-- Appointment Booking -->
 <div class="container" id="userApp">
@@ -208,7 +231,7 @@
     <div class="token-box" id="tokenBox">
         <div class="token-id" id="tokenNumber"></div>
         <div class="token-details" id="tokenDetails"></div>
-        <button onclick="window.print()" style="background: #059669;">Print Confirmation</button>
+        <button onclick="printToken()" style="background: #059669;">Print Confirmation</button>
     </div>
 
     <button class="btn-secondary" onclick="showAdmin()">Staff Dashboard Login</button>
@@ -231,7 +254,7 @@
     
     <div class="admin-actions">
         <button onclick="downloadPDF()" style="background: #6366f1;">Export Data</button>
-        <button onclick="window.print()" style="background: #0ea5e9;">Print List</button>
+        <button onclick="printList()" style="background: #0ea5e9;">Print List</button>
         <button onclick="clearAll()" style="background: #ef4444;">Purge All</button>
     </div>
 
@@ -251,7 +274,6 @@
 </div>
 
 <script>
-    //[cite: 1] Logic preserved from original source
     let PASS = "1234";
     let data = JSON.parse(localStorage.getItem("appointments") || "[]");
 
@@ -280,13 +302,34 @@
         data.push(obj);
         localStorage.setItem("appointments", JSON.stringify(data));
 
-        document.getElementById('tokenNumber').innerText = "#" + token;
-        document.getElementById('tokenDetails').innerHTML = `
-            <strong>Patient:</strong> ${n}<br>
+        let detailsHTML = `<strong>Patient:</strong> ${n}<br>
+            <strong>Age / Sex:</strong> ${a} / ${s}<br>
             <strong>Specialist:</strong> ${d}<br>
-            <strong>Schedule:</strong> ${dt} at ${tm}
-        `;
+            <strong>Schedule:</strong> ${dt} at ${tm}`;
+
+        document.getElementById('tokenNumber').innerText = "#" + token;
+        document.getElementById('tokenDetails').innerHTML = detailsHTML;
         document.getElementById('tokenBox').style.display = "block";
+
+        // Populate the hidden print slip with the same data
+        document.getElementById('printTokenNumber').innerText = "#" + token;
+        document.getElementById('printTokenDetails').innerHTML = detailsHTML;
+    }
+
+    function printToken() {
+        let slip = document.getElementById('printSlip');
+        slip.style.display = "block";
+        slip.classList.add('print-target');
+        window.print();
+        slip.style.display = "none";
+        slip.classList.remove('print-target');
+    }
+
+    function printList() {
+        let panel = document.getElementById('adminPanel');
+        panel.classList.add('print-target');
+        window.print();
+        panel.classList.remove('print-target');
     }
 
     function showAdmin() {
